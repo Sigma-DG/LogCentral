@@ -12,12 +12,12 @@ namespace LogCentral.Tests.WebApiTest
 {
     class Program
     {
-
+        private const string SERVER_URI = "http://localhost:54888/";
         static async Task DeleteAllLogs()
         {
             var delClient = new HttpClient();
             delClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            var delRes = await delClient.DeleteAsync("http://localhost/LogCentral.WebApi/api/logs");
+            var delRes = await delClient.DeleteAsync($"{SERVER_URI}api/logs");
             if (!delRes.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Error calling WebApi method to delete logs:\n{delRes.ReasonPhrase}\n{delRes.RequestMessage}");
@@ -51,7 +51,7 @@ namespace LogCentral.Tests.WebApiTest
                             Descriptions = "Few descriptions"
                         };
                         var content = new StringContent(JsonConvert.SerializeObject(logToAdd), System.Text.Encoding.UTF8, "application/json");
-                        var addRes = addClient.PutAsync("http://localhost/LogCentral.WebApi/api/logs", content).Result;
+                        var addRes = addClient.PutAsync($"{SERVER_URI}api/logs", content).Result;
                         if (!addRes.IsSuccessStatusCode)
                         {
                             Console.WriteLine($"Error calling WebApi method to add logs:\n{addRes.ReasonPhrase}\n{addRes.RequestMessage}");
@@ -77,14 +77,14 @@ namespace LogCentral.Tests.WebApiTest
         static void Main(string[] args)
         {
             Console.Write("Press any key to start..");
-            //Console.ReadKey(true);
+            Console.ReadKey(true);
             Console.Clear();
 
             Task.Run(async () => {
                 await AddTenItemsInTenThreads();
 
                 var c = new HttpClient();
-                var res = await c.GetAsync("http://localhost/LogCentral.WebApi/api/logs?pageIndex=0&pageSize=500");
+                var res = await c.GetAsync($"{SERVER_URI}api/logs?pageIndex=0&pageSize=500");
                 if (!res.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Error calling WebApi method:\n{res.ReasonPhrase}\n{res.RequestMessage}");
@@ -94,14 +94,18 @@ namespace LogCentral.Tests.WebApiTest
                 var strData = await res.Content.ReadAsStringAsync();
                 var data = JsonConvert.DeserializeObject<IEnumerable<Log>>(strData);
 
-                await DeleteAllLogs();
                 //if (!data.IsSucceeded)
                 //{
                 //    Console.WriteLine($"Error getting logs.\n{data.Message}\n{data.ErrorMetadata}\nPress any key to exit");
                 //    Console.ReadKey(true);
                 //    return;
                 //}
-                Console.WriteLine($"Found {data.Count()} items and removed them.\nPress any key to exit");
+                Console.WriteLine($"Found {data.Count()} items.");
+                
+                //await DeleteAllLogs();
+                //Console.WriteLine("And removed them.");
+
+                Console.WriteLine("Press any key to exit");
             });
 
             
