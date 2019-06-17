@@ -25,6 +25,7 @@ namespace LogCentral.DataAccess
             throw new UnintentionalCodeFirstException();
         }
     
+        public virtual DbSet<Application> Applications { get; set; }
         public virtual DbSet<Device> Devices { get; set; }
         public virtual DbSet<Log> Logs { get; set; }
         public virtual DbSet<User> Users { get; set; }

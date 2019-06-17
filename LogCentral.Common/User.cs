@@ -15,6 +15,7 @@ namespace LogCentral.Common
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime RegisterationUtcDate { get; set; }
+        public DateTime LastActivity { get; set; }
         public string Descriptions { get; set; }
     }
 }

@@ -4,7 +4,17 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="LogCentral.DataAccess.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="LogCentral.DataAccess.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Application">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="AppStoreIdentifier" Type="nvarchar" MaxLength="75" Nullable="false" />
+          <Property Name="RegisterationUtcDate" Type="datetime" Nullable="false" />
+          <Property Name="Description" Type="nvarchar(max)" />
+        </EntityType>
         <EntityType Name="Device">
           <Key>
             <PropertyRef Name="Id" />
@@ -30,9 +40,10 @@
           <Property Name="Longitude" Type="float" />
           <Property Name="Username" Type="nvarchar" MaxLength="255" />
           <Property Name="Device" Type="uniqueidentifier" />
+          <Property Name="Application" Type="uniqueidentifier" />
           <Property Name="Descriptions" Type="nvarchar(max)" />
         </EntityType>
-        <EntityType Name="Users">
+        <EntityType Name="User">
           <Key>
             <PropertyRef Name="Username" />
           </Key>
@@ -43,6 +54,18 @@
           <Property Name="RegisterationUtcDate" Type="datetime" Nullable="false" />
           <Property Name="Descriptions" Type="nvarchar(max)" />
         </EntityType>
+        <Association Name="FK_Log_Application">
+          <End Role="Application" Type="Self.Application" Multiplicity="0..1" />
+          <End Role="Log" Type="Self.Log" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Application">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Log">
+              <PropertyRef Name="Application" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Log_Device">
           <End Role="Device" Type="Self.Device" Multiplicity="0..1" />
           <End Role="Log" Type="Self.Log" Multiplicity="*" />
@@ -56,10 +79,10 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Log_Users">
-          <End Role="Users" Type="Self.Users" Multiplicity="0..1" />
+          <End Role="User" Type="Self.User" Multiplicity="0..1" />
           <End Role="Log" Type="Self.Log" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Users">
+            <Principal Role="User">
               <PropertyRef Name="Username" />
             </Principal>
             <Dependent Role="Log">
@@ -68,34 +91,67 @@
           </ReferentialConstraint>
         </Association>
         <EntityContainer Name="LogCentralDataAccessStoreContainer">
+          <EntitySet Name="Application" EntityType="Self.Application" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Device" EntityType="Self.Device" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Log" EntityType="Self.Log" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="Users" EntityType="Self.Users" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_Log_Application" Association="Self.FK_Log_Application">
+            <End Role="Application" EntitySet="Application" />
+            <End Role="Log" EntitySet="Log" />
+          </AssociationSet>
           <AssociationSet Name="FK_Log_Device" Association="Self.FK_Log_Device">
             <End Role="Device" EntitySet="Device" />
             <End Role="Log" EntitySet="Log" />
           </AssociationSet>
           <AssociationSet Name="FK_Log_Users" Association="Self.FK_Log_Users">
-            <End Role="Users" EntitySet="Users" />
+            <End Role="User" EntitySet="User" />
             <End Role="Log" EntitySet="Log" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="LogCentral.DataAccess" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="DBEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Applications" EntityType="LogCentral.DataAccess.Application" />
+          <EntitySet Name="Devices" EntityType="LogCentral.DataAccess.Device" />
+          <EntitySet Name="Logs" EntityType="LogCentral.DataAccess.Log" />
+          <EntitySet Name="Users" EntityType="LogCentral.DataAccess.User" />
+          <AssociationSet Name="FK_Log_Application" Association="LogCentral.DataAccess.FK_Log_Application">
+            <End Role="Application" EntitySet="Applications" />
+            <End Role="Log" EntitySet="Logs" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Log_Device" Association="LogCentral.DataAccess.FK_Log_Device">
+            <End Role="Device" EntitySet="Devices" />
+            <End Role="Log" EntitySet="Logs" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Log_Users" Association="LogCentral.DataAccess.FK_Log_Users">
+            <End Role="User" EntitySet="Users" />
+            <End Role="Log" EntitySet="Logs" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="Application">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Guid" Nullable="false" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="AppStoreIdentifier" Type="String" Nullable="false" MaxLength="75" FixedLength="false" Unicode="true" />
+          <Property Name="RegisterationUtcDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Logs" Relationship="LogCentral.DataAccess.FK_Log_Application" FromRole="Application" ToRole="Log" />
+        </EntityType>
         <EntityType Name="Device">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
           <Property Name="Id" Type="Guid" Nullable="false" />
-          <Property Name="Name" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="OwnerName" Type="String" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Platform" Type="Byte" />
           <Property Name="RegisterationUtcDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="Descriptions" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Logs" Relationship="Self.FK_Log_Device" FromRole="Device" ToRole="Log" />
+          <NavigationProperty Name="Logs" Relationship="LogCentral.DataAccess.FK_Log_Device" FromRole="Device" ToRole="Log" />
         </EntityType>
         <EntityType Name="Log">
           <Key>
@@ -104,32 +160,46 @@
           <Property Name="Id" Type="Guid" Nullable="false" />
           <Property Name="UtcTime" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="LocalTime" Type="DateTimeOffset" Nullable="false" Precision="7" />
-          <Property Name="Title" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Title" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="Section" Type="String" MaxLength="512" FixedLength="false" Unicode="true" />
           <Property Name="LogType" Type="Byte" Nullable="false" />
           <Property Name="Latitude" Type="Double" />
           <Property Name="Longitude" Type="Double" />
           <Property Name="Username" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Name="Device" Type="Guid" />
+          <Property Name="Application" Type="Guid" />
           <Property Name="Descriptions" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Device1" Relationship="Self.FK_Log_Device" FromRole="Log" ToRole="Device" />
-          <NavigationProperty Name="User" Relationship="Self.FK_Log_Users" FromRole="Log" ToRole="Users" />
+          <NavigationProperty Name="Application1" Relationship="LogCentral.DataAccess.FK_Log_Application" FromRole="Log" ToRole="Application" />
+          <NavigationProperty Name="Device1" Relationship="LogCentral.DataAccess.FK_Log_Device" FromRole="Log" ToRole="Device" />
+          <NavigationProperty Name="User" Relationship="LogCentral.DataAccess.FK_Log_Users" FromRole="Log" ToRole="User" />
         </EntityType>
         <EntityType Name="User">
           <Key>
             <PropertyRef Name="Username" />
           </Key>
-          <Property Name="Username" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Username" Type="String" Nullable="false" MaxLength="255" FixedLength="false" Unicode="true" />
           <Property Name="Title" Type="String" MaxLength="6" FixedLength="false" Unicode="true" />
           <Property Name="FirstName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="LastName" Type="String" MaxLength="75" FixedLength="false" Unicode="true" />
           <Property Name="RegisterationUtcDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="Descriptions" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <NavigationProperty Name="Logs" Relationship="Self.FK_Log_Users" FromRole="Users" ToRole="Log" />
+          <NavigationProperty Name="Logs" Relationship="LogCentral.DataAccess.FK_Log_Users" FromRole="User" ToRole="Log" />
         </EntityType>
+        <Association Name="FK_Log_Application">
+          <End Type="LogCentral.DataAccess.Application" Role="Application" Multiplicity="0..1" />
+          <End Type="LogCentral.DataAccess.Log" Role="Log" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Application">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Log">
+              <PropertyRef Name="Application" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Log_Device">
-          <End Role="Device" Type="Self.Device" Multiplicity="0..1" />
-          <End Role="Log" Type="Self.Log" Multiplicity="*" />
+          <End Type="LogCentral.DataAccess.Device" Role="Device" Multiplicity="0..1" />
+          <End Type="LogCentral.DataAccess.Log" Role="Log" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Device">
               <PropertyRef Name="Id" />
@@ -140,10 +210,10 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Log_Users">
-          <End Role="Users" Type="Self.User" Multiplicity="0..1" />
-          <End Role="Log" Type="Self.Log" Multiplicity="*" />
+          <End Type="LogCentral.DataAccess.User" Role="User" Multiplicity="0..1" />
+          <End Type="LogCentral.DataAccess.Log" Role="Log" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Users">
+            <Principal Role="User">
               <PropertyRef Name="Username" />
             </Principal>
             <Dependent Role="Log">
@@ -151,63 +221,62 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <EntityContainer Name="DBEntities" annotation:LazyLoadingEnabled="true">
-          <EntitySet Name="Devices" EntityType="Self.Device" />
-          <EntitySet Name="Logs" EntityType="Self.Log" />
-          <EntitySet Name="Users" EntityType="Self.User" />
-          <AssociationSet Name="FK_Log_Device" Association="Self.FK_Log_Device">
-            <End Role="Device" EntitySet="Devices" />
-            <End Role="Log" EntitySet="Logs" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Log_Users" Association="Self.FK_Log_Users">
-            <End Role="Users" EntitySet="Users" />
-            <End Role="Log" EntitySet="Logs" />
-          </AssociationSet>
-        </EntityContainer>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="LogCentralDataAccessStoreContainer" CdmEntityContainer="DBEntities">
+          <EntitySetMapping Name="Applications">
+            <EntityTypeMapping TypeName="LogCentral.DataAccess.Application">
+              <MappingFragment StoreEntitySet="Application">
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="RegisterationUtcDate" ColumnName="RegisterationUtcDate" />
+                <ScalarProperty Name="AppStoreIdentifier" ColumnName="AppStoreIdentifier" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="Devices">
             <EntityTypeMapping TypeName="LogCentral.DataAccess.Device">
               <MappingFragment StoreEntitySet="Device">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="OwnerName" ColumnName="OwnerName" />
-                <ScalarProperty Name="Platform" ColumnName="Platform" />
-                <ScalarProperty Name="RegisterationUtcDate" ColumnName="RegisterationUtcDate" />
                 <ScalarProperty Name="Descriptions" ColumnName="Descriptions" />
+                <ScalarProperty Name="RegisterationUtcDate" ColumnName="RegisterationUtcDate" />
+                <ScalarProperty Name="Platform" ColumnName="Platform" />
+                <ScalarProperty Name="OwnerName" ColumnName="OwnerName" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Logs">
             <EntityTypeMapping TypeName="LogCentral.DataAccess.Log">
               <MappingFragment StoreEntitySet="Log">
-                <ScalarProperty Name="Id" ColumnName="Id" />
-                <ScalarProperty Name="UtcTime" ColumnName="UtcTime" />
-                <ScalarProperty Name="LocalTime" ColumnName="LocalTime" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="Section" ColumnName="Section" />
-                <ScalarProperty Name="LogType" ColumnName="LogType" />
-                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
-                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
-                <ScalarProperty Name="Username" ColumnName="Username" />
-                <ScalarProperty Name="Device" ColumnName="Device" />
                 <ScalarProperty Name="Descriptions" ColumnName="Descriptions" />
+                <ScalarProperty Name="Application" ColumnName="Application" />
+                <ScalarProperty Name="Device" ColumnName="Device" />
+                <ScalarProperty Name="Username" ColumnName="Username" />
+                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="LogType" ColumnName="LogType" />
+                <ScalarProperty Name="Section" ColumnName="Section" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="LocalTime" ColumnName="LocalTime" />
+                <ScalarProperty Name="UtcTime" ColumnName="UtcTime" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Users">
             <EntityTypeMapping TypeName="LogCentral.DataAccess.User">
-              <MappingFragment StoreEntitySet="Users">
-                <ScalarProperty Name="Username" ColumnName="Username" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
-                <ScalarProperty Name="LastName" ColumnName="LastName" />
-                <ScalarProperty Name="RegisterationUtcDate" ColumnName="RegisterationUtcDate" />
+              <MappingFragment StoreEntitySet="User">
                 <ScalarProperty Name="Descriptions" ColumnName="Descriptions" />
+                <ScalarProperty Name="RegisterationUtcDate" ColumnName="RegisterationUtcDate" />
+                <ScalarProperty Name="LastName" ColumnName="LastName" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="Username" ColumnName="Username" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

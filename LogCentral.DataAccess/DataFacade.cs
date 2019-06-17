@@ -38,6 +38,7 @@ namespace LogCentral.DataAccess
         }
         #endregion
 
+        #region Log
         public async Task<ResultPack<IEnumerable<Common.Log>>> GetLogs(int pageIndex = 0, int pageSize = 50)
         {
             var res = new ResultPack<IEnumerable<Common.Log>>();
@@ -45,7 +46,7 @@ namespace LogCentral.DataAccess
             {
                 try
                 {
-                    var dbLogs = await(from d in db.Logs orderby d.UtcTime descending select d).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+                    var dbLogs = await (from d in db.Logs orderby d.UtcTime descending select d).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
 
                     res.ReturnParam = dbLogs.Select(x => x.ToCommonLog()).ToList();
                     res.IsSucceeded = true;
@@ -124,6 +125,13 @@ namespace LogCentral.DataAccess
             {
                 try
                 {
+                    #region Check and Add device
+                    if(newLog.Device.HasValue)
+                    {
+                        //if device did not exist
+                    }
+                    #endregion
+
                     db.Logs.Add(newLog.ToLog());
                     await db.SaveChangesAsync();
                     res.IsSucceeded = true;
@@ -185,7 +193,9 @@ namespace LogCentral.DataAccess
 
             return res;
         }
+        #endregion
 
+        #region Device
         public async Task<ResultPack<IEnumerable<Common.Device>>> GetDevices(int pageIndex = 0, int pageSize = 50)
         {
             var res = new ResultPack<IEnumerable<Common.Device>>();
@@ -206,5 +216,128 @@ namespace LogCentral.DataAccess
 
             return res;
         }
+
+        public async Task<ResultPack<IEnumerable<Common.Device>>> GetActiveDevices(DateTime utcLastActivityThreshold, int pageIndex = 0, int pageSize = 50)
+        {
+            var res = new ResultPack<IEnumerable<Common.Device>>();//TODO: Implement
+            //using (var db = new DBEntities())
+            //{
+            //    try
+            //    {
+            //        res.ReturnParam = await (from d in db.Devices orderby d.RegisterationUtcDate descending select d).Skip(pageIndex * pageSize).Take(pageSize).Select(x => x.ToCommonDevice()).ToListAsync();
+            //        res.IsSucceeded = true;
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        res.IsSucceeded = false;
+            //        res.Message = ex.Message;
+            //        res.ErrorMetadata = ex.StackTrace;
+            //    }
+            //}
+
+            return res;
+        }
+
+        public async Task<ActionResult> AddDevice(Common.Device newDevice)
+        {
+            if (newDevice == null) return new ActionResult { IsSucceeded = false, Message = "Null object received." };
+
+            var res = new ActionResult();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    db.Devices.Add(newDevice.ToDevice());
+                    await db.SaveChangesAsync();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+        #endregion
+
+        #region User
+        public async Task<ResultPack<IEnumerable<Common.User>>> GetUsers(int pageIndex = 0, int pageSize = 50)
+        {
+            var res = new ResultPack<IEnumerable<Common.User>>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbUsers = await (from d in db.Users orderby d.RegisterationUtcDate descending select d).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+
+                    res.ReturnParam = dbUsers.Select(x => x.ToCommonUser()).ToList();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+
+        public async Task<ResultPack<IEnumerable<Common.User>>> GetActiveUsers(DateTime utcLastActivityThreshold, int pageIndex = 0, int pageSize = 50)
+        {
+            var res = new ResultPack<IEnumerable<Common.User>>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbUsers = await (from u in db.Users join l in db.Logs on u.Username equals l.Username into joinedLogs
+                                         from j in joinedLogs.DefaultIfEmpty()
+                                         where j.UtcTime >= utcLastActivityThreshold /*orderby u.RegisterationUtcDate descending*/
+                                         select new { user = u, lastActivity = joinedLogs.Max(jt=>jt.UtcTime)})
+                                         .Distinct().Skip(pageIndex * pageSize)
+                                         .Take(pageSize).ToListAsync();
+
+                    res.ReturnParam = dbUsers.Select(x => x.user.ToCommonUser(x.lastActivity)).ToList();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+
+        public async Task<ActionResult> AddUser(Common.User newUser)
+        {
+            if (newUser == null) return new ActionResult { IsSucceeded = false, Message = "Null object received." };
+
+            var res = new ActionResult();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    db.Users.Add(newUser.ToUser());
+                    await db.SaveChangesAsync();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+        #endregion
     }
 }

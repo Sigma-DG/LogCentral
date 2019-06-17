@@ -24,8 +24,10 @@ namespace LogCentral.DataAccess
         public Nullable<double> Longitude { get; set; }
         public string Username { get; set; }
         public Nullable<System.Guid> Device { get; set; }
+        public Nullable<System.Guid> Application { get; set; }
         public string Descriptions { get; set; }
     
+        public virtual Application Application1 { get; set; }
         public virtual Device Device1 { get; set; }
         public virtual User User { get; set; }
     }

@@ -48,6 +48,21 @@ namespace LogCentral.DataAccess
             };
         }
 
+        public static DataAccess.Device ToDevice(this Common.Device device)
+        {
+            if (device == null) return null;
+
+            return new DataAccess.Device
+            {
+                Id = device.Id,
+                Descriptions = device.Descriptions,
+                Name = device.Name,
+                OwnerName = device.OwnerName,
+                Platform = device.Platform,
+                RegisterationUtcDate = device.RegisterationUtcDate,
+            };
+        }
+
         public static Common.Device ToCommonDevice(this DataAccess.Device device)
         {
             if (device == null) return null;
@@ -63,7 +78,21 @@ namespace LogCentral.DataAccess
             };
         }
 
-        public static Common.User ToCommonUser(this DataAccess.User user)
+        public static DataAccess.User ToUser(this Common.User user)
+        {
+            if (user == null) return null;
+
+            return new DataAccess.User
+            {
+                Username = user.Username,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Descriptions = user.Descriptions,
+                RegisterationUtcDate = user.RegisterationUtcDate,
+            };
+        }
+
+        public static Common.User ToCommonUser(this DataAccess.User user, DateTime lastActivity = default(DateTime))
         {
             if (user == null) return null;
 
@@ -74,6 +103,35 @@ namespace LogCentral.DataAccess
                 LastName = user.LastName,
                 Descriptions = user.Descriptions,
                 RegisterationUtcDate = user.RegisterationUtcDate,
+                LastActivity = lastActivity,
+            };
+        }
+
+        public static DataAccess.Application ToApplication(this Common.Application application)
+        {
+            if (application == null) return null;
+
+            return new DataAccess.Application
+            {
+                Id = application.Id,
+                Name = application.Name,
+                AppStoreIdentifier = application.AppStoreIdentifier,
+                Description = application.Description,
+                RegisterationUtcDate = application.RegisterationUtcDate
+            };
+        }
+
+        public static Common.Application ToCommonApplication(this DataAccess.Application application)
+        {
+            if (application == null) return null;
+
+            return new Common.Application
+            {
+                Id = application.Id,
+                Name = application.Name,
+                AppStoreIdentifier = application.AppStoreIdentifier,
+                Description = application.Description,
+                RegisterationUtcDate = application.RegisterationUtcDate
             };
         }
     }
