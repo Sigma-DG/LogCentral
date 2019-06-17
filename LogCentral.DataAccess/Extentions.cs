@@ -63,7 +63,7 @@ namespace LogCentral.DataAccess
             };
         }
 
-        public static Common.Device ToCommonDevice(this DataAccess.Device device)
+        public static Common.Device ToCommonDevice(this DataAccess.Device device, DateTime lastActivity = default(DateTime))
         {
             if (device == null) return null;
 
@@ -75,6 +75,7 @@ namespace LogCentral.DataAccess
                 OwnerName = device.OwnerName,
                 Platform = device.Platform,
                 RegisterationUtcDate = device.RegisterationUtcDate,
+                LastActivity = lastActivity,
             };
         }
 

@@ -196,6 +196,28 @@ namespace LogCentral.DataAccess
         #endregion
 
         #region Device
+        public async Task<ResultPack<Common.Device>> GetDevice(Guid deviceId)
+        {
+            var res = new ResultPack<Common.Device>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbDevices = await (from d in db.Devices where d.Id.Equals(deviceId) select d).FirstOrDefaultAsync();
+
+                    res.ReturnParam = dbDevices != null ? dbDevices.ToCommonDevice() : null;
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
         public async Task<ResultPack<IEnumerable<Common.Device>>> GetDevices(int pageIndex = 0, int pageSize = 50)
         {
             var res = new ResultPack<IEnumerable<Common.Device>>();
@@ -203,7 +225,8 @@ namespace LogCentral.DataAccess
             {
                 try
                 {
-                    res.ReturnParam = await (from d in db.Devices orderby d.RegisterationUtcDate descending select d).Skip(pageIndex * pageSize).Take(pageSize).Select(x => x.ToCommonDevice()).ToListAsync();
+                    var dbDevices = await (from d in db.Devices orderby d.RegisterationUtcDate descending select d).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+                    res.ReturnParam = dbDevices.Select(x => x.ToCommonDevice());
                     res.IsSucceeded = true;
                 }
                 catch (Exception ex)
@@ -219,21 +242,29 @@ namespace LogCentral.DataAccess
 
         public async Task<ResultPack<IEnumerable<Common.Device>>> GetActiveDevices(DateTime utcLastActivityThreshold, int pageIndex = 0, int pageSize = 50)
         {
-            var res = new ResultPack<IEnumerable<Common.Device>>();//TODO: Implement
-            //using (var db = new DBEntities())
-            //{
-            //    try
-            //    {
-            //        res.ReturnParam = await (from d in db.Devices orderby d.RegisterationUtcDate descending select d).Skip(pageIndex * pageSize).Take(pageSize).Select(x => x.ToCommonDevice()).ToListAsync();
-            //        res.IsSucceeded = true;
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        res.IsSucceeded = false;
-            //        res.Message = ex.Message;
-            //        res.ErrorMetadata = ex.StackTrace;
-            //    }
-            //}
+            var res = new ResultPack<IEnumerable<Common.Device>>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbUsers = await (from d in db.Devices
+                                         join l in db.Logs on d.Id equals l.Device into joinedLogs
+                                         from j in joinedLogs.DefaultIfEmpty()
+                                         where j.UtcTime >= utcLastActivityThreshold /*orderby u.RegisterationUtcDate descending*/
+                                         select new { device = d, lastActivity = joinedLogs.Max(jt => jt.UtcTime) })
+                                         .Distinct().OrderByDescending(x => x.lastActivity).Skip(pageIndex * pageSize)
+                                         .Take(pageSize).ToListAsync();
+
+                    res.ReturnParam = dbUsers.Select(x => x.device.ToCommonDevice(x.lastActivity)).ToList();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
 
             return res;
         }
@@ -264,6 +295,36 @@ namespace LogCentral.DataAccess
         #endregion
 
         #region User
+        public async Task<ResultPack<Common.User>> GetUser(string username)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                return new ResultPack<Common.User> {
+                    IsSucceeded = false,
+                    Message = "Username is not provided"
+                };
+
+            username = username.ToLower();
+            var res = new ResultPack<Common.User>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbUser = await (from u in db.Users where u.Username.ToLower().Equals(username) select u).FirstOrDefaultAsync();
+
+                    res.ReturnParam = dbUser != null ? dbUser.ToCommonUser() : null;
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+
         public async Task<ResultPack<IEnumerable<Common.User>>> GetUsers(int pageIndex = 0, int pageSize = 50)
         {
             var res = new ResultPack<IEnumerable<Common.User>>();
@@ -298,7 +359,7 @@ namespace LogCentral.DataAccess
                                          from j in joinedLogs.DefaultIfEmpty()
                                          where j.UtcTime >= utcLastActivityThreshold /*orderby u.RegisterationUtcDate descending*/
                                          select new { user = u, lastActivity = joinedLogs.Max(jt=>jt.UtcTime)})
-                                         .Distinct().Skip(pageIndex * pageSize)
+                                         .Distinct().OrderByDescending(x=>x.lastActivity).Skip(pageIndex * pageSize)
                                          .Take(pageSize).ToListAsync();
 
                     res.ReturnParam = dbUsers.Select(x => x.user.ToCommonUser(x.lastActivity)).ToList();
@@ -325,6 +386,78 @@ namespace LogCentral.DataAccess
                 try
                 {
                     db.Users.Add(newUser.ToUser());
+                    await db.SaveChangesAsync();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+        #endregion
+
+        #region Application
+        public async Task<ResultPack<Common.Application>> GetApplication(Guid appId)
+        {
+            var res = new ResultPack<Common.Application>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbApp = await (from a in db.Applications where a.Id.Equals(appId) select a).FirstOrDefaultAsync();
+
+                    res.ReturnParam = dbApp != null ? dbApp.ToCommonApplication() : null;
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+
+        public async Task<ResultPack<IEnumerable<Common.Application>>> GetApplicationList(int pageIndex = 0, int pageSize = 50)
+        {
+            var res = new ResultPack<IEnumerable<Common.Application>>();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    var dbApps = await (from a in db.Applications orderby a.RegisterationUtcDate descending select a).Skip(pageIndex * pageSize).Take(pageSize).ToListAsync();
+
+                    res.ReturnParam = dbApps.Select(x => x.ToCommonApplication()).ToList();
+                    res.IsSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    res.IsSucceeded = false;
+                    res.Message = ex.Message;
+                    res.ErrorMetadata = ex.StackTrace;
+                }
+            }
+
+            return res;
+        }
+
+        public async Task<ActionResult> AddApplication(Common.Application newApp)
+        {
+            if (newApp == null) return new ActionResult { IsSucceeded = false, Message = "Null object received." };
+
+            var res = new ActionResult();
+            using (var db = new DBEntities())
+            {
+                try
+                {
+                    db.Applications.Add(newApp.ToApplication());
                     await db.SaveChangesAsync();
                     res.IsSucceeded = true;
                 }

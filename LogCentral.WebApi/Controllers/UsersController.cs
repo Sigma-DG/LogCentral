@@ -10,19 +10,19 @@ using System.Web.Http;
 
 namespace LogCentral.WebApi.Controllers
 {
-    public class DevicesController : ApiController
+    public class UsersController : ApiController
     {
-        // GET: api/Devices
-        [Route("api/devices")]
+        // GET api/users
+        [Route("api/users")]
         public async Task<IHttpActionResult> Get(int? pageIndex = null, int? pageSize = null)
         {
-            ResultPack<IEnumerable<Common.Device>> res = null;
+            ResultPack<IEnumerable<Common.User>> res = null;
             if (pageIndex.HasValue && pageSize.HasValue)
-                res = await DataFacade.Current.GetDevices(pageIndex.Value, pageSize.Value);
+                res = await DataFacade.Current.GetUsers(pageIndex.Value, pageSize.Value);
             else if (pageIndex.HasValue)
-                res = await DataFacade.Current.GetDevices(pageIndex.Value);
+                res = await DataFacade.Current.GetUsers(pageIndex.Value);
             else
-                res = await DataFacade.Current.GetDevices();
+                res = await DataFacade.Current.GetUsers();
 
             if (!res.IsSucceeded)
             {
@@ -33,21 +33,21 @@ namespace LogCentral.WebApi.Controllers
             return Ok(res.ReturnParam);
         }
 
-        // GET api/activedevices
-        [Route("api/activedevices")]
-        public async Task<IHttpActionResult> GetActiveDevices(DateTime? lastActivityThreshold, int? pageIndex = null, int? pageSize = null)
+        // GET api/activeusers
+        [Route("api/activeusers")]
+        public async Task<IHttpActionResult> GetActiveUsers(DateTime? lastActivityThreshold, int? pageIndex = null, int? pageSize = null)
         {
             if (!lastActivityThreshold.HasValue)
             {
                 return StatusCode(HttpStatusCode.InternalServerError);
             }
-            ResultPack<IEnumerable<Common.Device>> res = null;
+            ResultPack<IEnumerable<Common.User>> res = null;
             if (pageIndex.HasValue && pageSize.HasValue)
-                res = await DataFacade.Current.GetActiveDevices(lastActivityThreshold.Value, pageIndex.Value, pageSize.Value);
+                res = await DataFacade.Current.GetActiveUsers(lastActivityThreshold.Value, pageIndex.Value, pageSize.Value);
             else if (pageIndex.HasValue)
-                res = await DataFacade.Current.GetActiveDevices(lastActivityThreshold.Value, pageIndex.Value);
+                res = await DataFacade.Current.GetActiveUsers(lastActivityThreshold.Value, pageIndex.Value);
             else
-                res = await DataFacade.Current.GetActiveDevices(lastActivityThreshold.Value);
+                res = await DataFacade.Current.GetActiveUsers(lastActivityThreshold.Value);
 
             if (!res.IsSucceeded)
             {
@@ -58,11 +58,11 @@ namespace LogCentral.WebApi.Controllers
             return Ok(res.ReturnParam);
         }
 
-        // GET: api/Devices/5
-        [Route("api/devices/{id}")]
-        public async Task<IHttpActionResult> Get(Guid id)
+        // GET api/users/user1
+        [Route("api/users/{username}")]
+        public async Task<IHttpActionResult> Get(string username)
         {
-            var res = await DataFacade.Current.GetDevice(id);
+            var res = await DataFacade.Current.GetUser(username);
             if (!res.IsSucceeded)
             {
                 //TODO: Log in file if is ON
@@ -71,16 +71,16 @@ namespace LogCentral.WebApi.Controllers
             return Ok(res.ReturnParam);
         }
 
-        //// POST: api/Devices
+        //// POST api/users
         //public void Post([FromBody]string value)
         //{
         //}
 
-        // PUT: api/Devices
-        [Route("api/devices")]
-        public async Task<IHttpActionResult> Put([FromBody]Common.Device device)
+        // PUT api/users
+        [Route("api/users")]
+        public async Task<IHttpActionResult> Put([FromBody]Common.User user)
         {
-            var res = await DataFacade.Current.AddDevice(device);
+            var res = await DataFacade.Current.AddUser(user);
             if (!res.IsSucceeded)
             {
                 //TODO: Log in file if is ON
@@ -90,7 +90,7 @@ namespace LogCentral.WebApi.Controllers
             return Ok(res);
         }
 
-        //// DELETE: api/Devices/5
+        //// DELETE api/<controller>/5
         //public void Delete(int id)
         //{
         //}

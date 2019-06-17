@@ -76,7 +76,7 @@ namespace LogCentral.WebApi.Controllers
             return Ok(res.ReturnParam);
         }
 
-        // PUT: api/Logs/5
+        // PUT: api/Logs
         [Route("api/logs")]
         public async Task<IHttpActionResult> Put([FromBody]Common.Log log)
         {
@@ -84,7 +84,7 @@ namespace LogCentral.WebApi.Controllers
             if (!res.IsSucceeded)
             {
                 //TODO: Log in file if is ON
-                //return StatusCode(500, new Exception(res.Message, new Exception(res.ErrorMetadata)));
+                return StatusCode(HttpStatusCode.InternalServerError);
             }
 
             return Ok(res);
@@ -98,7 +98,7 @@ namespace LogCentral.WebApi.Controllers
             if (!res.IsSucceeded)
             {
                 //TODO: Log in file if is ON
-                //return StatusCode(500, new Exception(res.Message, new Exception(res.ErrorMetadata)));
+                return StatusCode(HttpStatusCode.InternalServerError);
             }
 
             return Ok(res);
